@@ -8,15 +8,18 @@ import pickle
 from datetime import date
 from pathlib import Path
 from functools import wraps
+import pandas as pd
 
 
 def cache_data(cache_dir: str = "data/raw"):
     """
-    Decorador simple para cachear datos usando pickle
+    Decorador mejorado para cachear datos usando pickle
 
     Genera archivo: ticker_periodo_fecha.pkl
     Primera vez: ejecuta función y guarda
     Siguientes veces: carga desde pickle
+
+    MANEJA TANTO DataFrames COMO diccionarios
 
     Args:
         cache_dir: directorio donde guardar cache
@@ -41,18 +44,37 @@ def cache_data(cache_dir: str = "data/raw"):
             # Cargar desde cache si existe
             if cache_file.exists():
                 print(f"📦 Cache: {cache_key}")
-                with open(cache_file, 'rb') as f:
-                    return pickle.load(f)
+                try:
+                    with open(cache_file, 'rb') as f:
+                        return pickle.load(f)
+                except Exception as e:
+                    print(f"⚠️ Error cargando cache, descargando nuevamente: {e}")
 
             # Ejecutar función y guardar
             print(f"🌐 Descarga: {cache_key}")
             result = func(*args, **kwargs)
 
             # Guardar si hay datos válidos
-            if result is not None and not result.empty:
-                with open(cache_file, 'wb') as f:
-                    pickle.dump(result, f)
-                print(f"💾 Guardado: {cache_key}")
+            should_cache = False
+
+            if result is not None:
+                # Verificar si es DataFrame
+                if isinstance(result, pd.DataFrame):
+                    should_cache = not result.empty
+                # Verificar si es diccionario
+                elif isinstance(result, dict):
+                    should_cache = bool(result)  # True si el dict no está vacío
+                # Otros tipos (listas, etc.)
+                else:
+                    should_cache = bool(result)
+
+            if should_cache:
+                try:
+                    with open(cache_file, 'wb') as f:
+                        pickle.dump(result, f)
+                    print(f"💾 Guardado: {cache_key}")
+                except Exception as e:
+                    print(f"⚠️ Error guardando cache: {e}")
 
             return result
 

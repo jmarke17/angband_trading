@@ -1,219 +1,226 @@
 """
-Angband Trading - Main Entry Point
+Angband Trading - ETL Principal
 
-Este es el punto de entrada principal del proyecto de trading cuantitativo.
-Aquí inicializamos y ejecutamos las diferentes funcionalidades del sistema.
+ETL sencilla: Extract (descargar), Transform (procesar), Load (guardar)
 """
 
 import time
+from datetime import datetime
 
 
-def main():
+def extract_data(ticker: str = "AAPL"):
     """
-    Función principal del proyecto Angband Trading
+    EXTRACT: Descargar todos los datos disponibles del ticker
     """
-    print("🏰 Angband Trading - Quantitative Trading Platform")
-    print("=" * 50)
-
-    # Verificar que el entorno está configurado correctamente
-    try:
-        import sys
-        print(f"✅ Python version: {sys.version}")
-
-        # Verificar importaciones básicas
-        import pandas as pd
-        import numpy as np
-        print(f"✅ Pandas version: {pd.__version__}")
-        print(f"✅ NumPy version: {np.__version__}")
-
-        print("\n🚀 Sistema inicializado correctamente!")
-        print("📚 Listo para comenzar el aprendizaje de trading cuantitativo")
-
-    except ImportError as e:
-        print(f"❌ Error importing required libraries: {e}")
-        print("💡 Make sure to install requirements: pip install -r requirements.txt")
-        return False
-
-    return True
-
-
-def test_cache_system():
-    """
-    Probar el sistema de cache con datos reales
-    """
-    print("\n" + "=" * 50)
-    print("🧪 PROBANDO SISTEMA DE CACHE")
-    print("=" * 50)
+    print(f"🔽 EXTRACT: Descargando datos completos de {ticker}")
+    print("-" * 50)
 
     try:
         from python.data.collectors import stock_collector
 
-        # Test 1: Primera descarga (desde yfinance)
-        print("\n📊 Test 1: Primera descarga de AAPL")
         start_time = time.time()
-        data1 = stock_collector.fetch_stock_data("AAPL", "1y")
-        time1 = time.time() - start_time
 
-        if data1 is not None:
-            print(f"⏱️ Tiempo primera descarga: {time1:.2f} segundos")
-            print(f"📈 Registros obtenidos: {len(data1)}")
-            print(f"📅 Período: {data1.index[0]} a {data1.index[-1]}")
+        # Descarga completa de todos los datos
+        complete_data = stock_collector.fetch_complete_stock_data(ticker)
 
-        # Test 2: Segunda descarga (desde cache)
-        print("\n📦 Test 2: Segunda descarga de AAPL (cache)")
-        start_time = time.time()
-        data2 = stock_collector.fetch_stock_data("AAPL", "1y")
-        time2 = time.time() - start_time
+        extract_time = time.time() - start_time
 
-        if data2 is not None:
-            print(f"⏱️ Tiempo desde cache: {time2:.2f} segundos")
-            print(f"🚀 Aceleración: {time1 / time2:.1f}x más rápido")
+        if complete_data and complete_data.get('data_sources'):
+            print(f"✅ Extract completado en {extract_time:.2f}s")
+            print(f"📊 Fuentes obtenidas: {len(complete_data['data_sources'])}")
+            return complete_data
+        else:
+            print("❌ Error en Extract: No se obtuvieron datos")
+            return None
 
-        # Test 3: Datos múltiples
-        print("\n📊 Test 3: Múltiples acciones")
-        tickers = ["MSFT", "GOOGL", "TSLA"]
-        start_time = time.time()
-        multiple_data = stock_collector.fetch_multiple_stocks(tickers, "6mo")
-        time3 = time.time() - start_time
+    except Exception as e:
+        print(f"❌ Error en Extract: {e}")
+        return None
 
-        print(f"⏱️ Tiempo múltiples: {time3:.2f} segundos")
-        print(f"✅ Acciones obtenidas: {len(multiple_data)}/{len(tickers)}")
 
-        # Test 4: Información de empresa
-        print("\n🏢 Test 4: Información de empresa")
-        info = stock_collector.get_stock_info("AAPL")
-        if info:
-            print(f"📋 Empresa: {info.get('longName', 'N/A')}")
-            print(f"🏭 Sector: {info.get('sector', 'N/A')}")
-            print(f"💰 Precio actual: ${info.get('currentPrice', 'N/A')}")
+def transform_data(raw_data):
+    """
+    TRANSFORM: Procesar y estructurar los datos básicos
+    """
+    print(f"\n🔄 TRANSFORM: Procesando datos")
+    print("-" * 50)
 
-        print("\n✅ TODOS LOS TESTS COMPLETADOS!")
+    if not raw_data:
+        print("❌ No hay datos para transformar")
+        return None
+
+    try:
+        transformed = {
+            'ticker': raw_data['ticker'],
+            'processed_at': datetime.now().isoformat(),
+            'summary': {}
+        }
+
+        # Procesar datos históricos principales
+        if 'historical' in raw_data:
+            historical = raw_data['historical']
+
+            # Usar el período más largo disponible
+            main_data = None
+            for period in ['max_1d', '10y_1d', '5y_1d', '3y_1d', '1y_1d']:
+                if period in historical:
+                    main_data = historical[period]['data']
+                    transformed['summary']['data_period'] = period
+                    break
+
+            if main_data is not None:
+                # Calcular métricas básicas
+                latest_price = main_data['Close'].iloc[-1]
+                first_price = main_data['Close'].iloc[0]
+                total_return = ((latest_price - first_price) / first_price) * 100
+
+                transformed['summary']['price_data'] = {
+                    'current_price': round(latest_price, 2),
+                    'first_price': round(first_price, 2),
+                    'max_price': round(main_data['High'].max(), 2),
+                    'min_price': round(main_data['Low'].min(), 2),
+                    'total_return_pct': round(total_return, 2),
+                    'avg_volume': int(main_data['Volume'].mean()),
+                    'total_records': len(main_data)
+                }
+                print(f"  ✅ Datos históricos procesados: {len(main_data)} registros")
+
+        # Procesar información fundamental
+        if 'key_metrics' in raw_data:
+            metrics = raw_data['key_metrics']
+
+            basic_info = metrics.get('basic_info', {})
+            market_data = metrics.get('market_data', {})
+
+            transformed['summary']['company_info'] = {
+                'name': basic_info.get('longName', 'N/A'),
+                'sector': basic_info.get('sector', 'N/A'),
+                'market_cap': market_data.get('marketCap'),
+                'current_price': market_data.get('currentPrice')
+            }
+            print(f"  ✅ Información fundamental procesada")
+
+        # Procesar dividendos si existen
+        if 'dividends' in raw_data:
+            div_data = raw_data['dividends']
+            transformed['summary']['dividends'] = {
+                'total_payments': div_data['total_payments'],
+                'total_amount': round(div_data['total_amount'], 2),
+                'avg_dividend': round(div_data['average_dividend'], 2)
+            }
+            print(f"  ✅ Dividendos procesados: {div_data['total_payments']} pagos")
+
+        print(f"✅ Transform completado")
+        return transformed
+
+    except Exception as e:
+        print(f"❌ Error en Transform: {e}")
+        return None
+
+
+def load_summary(processed_data):
+    """
+    LOAD: Mostrar resumen final de los datos procesados
+    """
+    print(f"\n📤 LOAD: Generando resumen final")
+    print("-" * 50)
+
+    if not processed_data or not isinstance(processed_data, dict):
+        print("❌ No hay datos procesados válidos para mostrar")
+        return False
+
+    try:
+        ticker = processed_data.get('ticker', 'UNKNOWN')
+        summary = processed_data.get('summary', {})
+
+        print(f"\n🏢 EMPRESA: {ticker}")
+        print("=" * 30)
+
+        # Información de la empresa
+        if 'company_info' in summary:
+            company = summary['company_info']
+            print(f"📋 Nombre: {company.get('name', 'N/A')}")
+            print(f"🏭 Sector: {company.get('sector', 'N/A')}")
+            print(f"🔧 Industria: {company.get('industry', 'N/A')}")
+
+            market_cap = company.get('market_cap')
+            if market_cap and market_cap > 0:
+                market_cap_b = market_cap / 1e9
+                print(f"💰 Capitalización: ${market_cap_b:.1f}B")
+
+        # Datos de precios
+        if 'price_data' in summary:
+            prices = summary['price_data']
+            print(f"\n📊 DATOS DE PRECIOS:")
+            print(f"💵 Precio actual: ${prices.get('current_price', 'N/A')}")
+            print(f"📈 Máximo histórico: ${prices.get('max_price', 'N/A')}")
+            print(f"📉 Mínimo histórico: ${prices.get('min_price', 'N/A')}")
+            print(f"🎯 Retorno total: {prices.get('total_return_pct', 'N/A')}%")
+            print(f"📊 Volumen promedio: {prices.get('avg_volume', 'N/A'):,}")
+            print(f"📅 Registros históricos: {prices.get('total_records', 'N/A'):,}")
+            print(f"📆 Período: {prices.get('date_range', 'N/A')}")
+
+            # Mostrar el período de datos usado
+            data_period = summary.get('data_period', 'N/A')
+            print(f"⏰ Período usado: {data_period}")
+
+        # Dividendos
+        if 'dividends' in summary:
+            div = summary['dividends']
+            print(f"\n💰 DIVIDENDOS:")
+            print(f"💸 Total pagos: {div.get('total_payments', 0)}")
+            print(f"💵 Monto total: ${div.get('total_amount', 0)}")
+            print(f"📊 Promedio por pago: ${div.get('avg_dividend', 0)}")
+        else:
+            print(f"\n💰 DIVIDENDOS: Sin historial de dividendos")
+
+        # Splits
+        if 'splits' in summary:
+            splits = summary['splits']
+            print(f"\n📊 SPLITS: {splits.get('total_splits', 0)} eventos de división")
+
+        print(f"\n✅ Resumen generado exitosamente")
         return True
 
     except Exception as e:
-        print(f"❌ Error en tests de cache: {e}")
+        print(f"❌ Error en Load: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 
-def test_project_structure():
+def run_etl(ticker: str = "AAPL"):
     """
-    Verificar que la estructura del proyecto está correcta
+    Ejecutar el proceso ETL completo
     """
-    import os
-    from pathlib import Path
+    print("🏰 Angband Trading - ETL Pipeline")
+    print("=" * 60)
+    print(f"🎯 Procesando: {ticker}")
+    print(f"⏰ Inicio: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print("=" * 60)
 
-    print("\n" + "=" * 50)
-    print("🔍 VERIFICANDO ESTRUCTURA DEL PROYECTO")
-    print("=" * 50)
+    # ETL Pipeline
+    raw_data = extract_data(ticker)
+    processed_data = transform_data(raw_data)
+    success = load_summary(processed_data)
 
-    # Obtener el directorio raíz del proyecto
-    project_root = Path(__file__).parent.parent
+    # Resultado final
+    print("\n" + "=" * 60)
+    print("🎯 RESULTADO ETL")
+    print("=" * 60)
 
-    # Directorios que deben existir
-    required_dirs = [
-        "python",
-        "python/core",
-        "python/data",
-        "python/strategies",
-        "python/backtesting",
-        "python/utils",
-        "python/visualization",
-        "data",
-        "configs",
-        "tests",
-        "scripts",
-        "docs",
-        "logs"
-    ]
-
-    missing_dirs = []
-
-    for dir_path in required_dirs:
-        full_path = project_root / dir_path
-        if full_path.exists():
-            print(f"  ✅ {dir_path}")
-        else:
-            print(f"  ❌ {dir_path}")
-            missing_dirs.append(dir_path)
-
-    if missing_dirs:
-        print(f"\n⚠️  Directorios faltantes: {missing_dirs}")
-        return False
+    if success:
+        print("✅ ETL completado exitosamente")
+        print("📊 Datos extraídos, transformados y cargados")
+        print("🚀 Sistema listo para análisis avanzado")
     else:
-        print("\n✅ Estructura del proyecto verificada correctamente!")
-        return True
+        print("❌ ETL falló")
+        print("🔧 Revisa los errores anteriores")
 
-
-def show_cache_status():
-    """
-    Mostrar estado actual del cache
-    """
-    print("\n" + "=" * 50)
-    print("📦 ESTADO DEL CACHE")
-    print("=" * 50)
-
-    from pathlib import Path
-
-    cache_dir = Path("data/raw")
-    if not cache_dir.exists():
-        print("📁 No existe directorio de cache")
-        return
-
-    cache_files = list(cache_dir.glob("*.pkl"))
-
-    if not cache_files:
-        print("🗂️ Cache vacío")
-        return
-
-    total_size = 0
-    print(f"📦 Archivos en cache: {len(cache_files)}")
-
-    for file in cache_files:
-        size_mb = file.stat().st_size / (1024 * 1024)
-        total_size += size_mb
-        print(f"  📄 {file.name} ({size_mb:.2f} MB)")
-
-    print(f"\n💾 Tamaño total del cache: {total_size:.2f} MB")
+    print(f"⏰ Fin: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    return success
 
 
 if __name__ == "__main__":
-    print("Iniciando Angband Trading...")
-
-    # 1. Verificar estructura
-    structure_ok = test_project_structure()
-
-    if not structure_ok:
-        print("\n❌ Error en la estructura del proyecto")
-        exit(1)
-
-    # 2. Verificar entorno
-    main_ok = main()
-
-    if not main_ok:
-        print("\n❌ Error en la inicialización del sistema")
-        exit(1)
-
-    # 3. Probar sistema de cache
-    cache_ok = test_cache_system()
-
-    # 4. Mostrar estado del cache
-    show_cache_status()
-
-    # 5. Resumen final
-    print("\n" + "=" * 50)
-    print("🎯 RESUMEN FINAL")
-    print("=" * 50)
-
-    if cache_ok:
-        print("✅ Sistema de cache funcionando correctamente")
-        print("✅ Colector de datos operativo")
-        print("✅ Todas las pruebas pasaron")
-        print("\n🚀 Sistema listo para el desarrollo!")
-        print("\nPróximos pasos:")
-        print("1. ✅ Estructura creada")
-        print("2. ✅ Sistema de cache implementado")
-        print("3. 📝 Crear análisis exploratorio")
-        print("4. 📈 Implementar primera estrategia")
-    else:
-        print("❌ Problemas con el sistema de cache")
-        print("💡 Revisa los errores anteriores")
+    # Ejecutar ETL para AAPL
+    run_etl("AAPL")
