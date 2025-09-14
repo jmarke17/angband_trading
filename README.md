@@ -1,185 +1,155 @@
 # Angband Trading
 
-> *A comprehensive quantitative trading learning platform*
-
-**Angband Trading** is a structured educational project designed to progressively build quantitative trading skills from data collection to strategy deployment. This repository follows a methodical approach to learning algorithmic trading concepts.
-
-## 📚 Learning Objectives
-
-This project serves as a hands-on learning journey through quantitative finance, covering:
-
-- **Data Engineering**: Market data collection, cleaning, and storage
-- **Exploratory Analysis**: Statistical analysis and pattern recognition
-- **Strategy Development**: Implementation of trading algorithms
-- **Backtesting**: Performance evaluation and risk assessment
-- **Optimization**: Parameter tuning and strategy refinement
-- **Risk Management**: Portfolio construction and risk metrics
-
-## 🎯 Project Structure
-
-The repository is organized to support progressive learning:
-
-```
-angband-trading/
-├── src/angband/              # Core library modules
-│   ├── core/                 # Configuration and utilities
-│   ├── data/                 # Data collection and processing
-│   ├── strategies/           # Trading strategy implementations
-│   ├── backtesting/          # Performance testing framework
-│   └── utils/                # Common utilities
-├── notebooks/                # Jupyter notebooks for exploration
-│   ├── 01_exploration/       # Data exploration and analysis
-│   ├── 02_research/          # Strategy research and development
-│   └── 03_backtesting/       # Strategy testing and validation
-├── data/                     # Data storage
-│   ├── raw/                  # Original market data
-│   ├── processed/            # Cleaned and transformed data
-│   └── external/             # External datasets
-├── configs/                  # Configuration files
-└── docs/                     # Documentation and research notes
-```
-
-## 🚀 Getting Started
-
-### Environment Setup
-```bash
-# Clone the repository
-git clone https://github.com/jmarke17/angband_trading.git
-cd angband_trading
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Install package in development mode
-pip install -e .
-```
-
-### First Steps
-```python
-from angband.data.collectors import DataCollector
-from angband.core.config import Config
-
-# Initialize data collector
-collector = DataCollector()
-data = collector.fetch_data("AAPL", period="1y")
-
-print("Angband Trading environment ready for learning")
-```
-
-## 📈 Learning Roadmap
-
-### Phase 1: Data Foundation (Weeks 1-2)
-- **Market Data Collection**: Learn to gather reliable financial data
-- **Data Quality Assessment**: Understand data issues and cleaning
-- **Exploratory Data Analysis**: Statistical properties of financial time series
-- **Visualization**: Create meaningful charts and plots
-
-### Phase 2: Technical Analysis (Weeks 3-4)
-- **Indicators Implementation**: Moving averages, RSI, MACD, etc.
-- **Signal Generation**: Convert indicators into trading signals
-- **Pattern Recognition**: Identify common market patterns
-- **Correlation Analysis**: Understand asset relationships
-
-### Phase 3: Strategy Development (Weeks 5-8)
-- **Simple Strategies**: Moving average crossovers, mean reversion
-- **Strategy Framework**: Modular strategy implementation
-- **Parameter Optimization**: Grid search and walk-forward analysis
-- **Multi-asset Strategies**: Portfolio-based approaches
-
-### Phase 4: Risk and Performance (Weeks 9-12)
-- **Backtesting Engine**: Realistic simulation framework
-- **Performance Metrics**: Sharpe ratio, maximum drawdown, etc.
-- **Risk Management**: Position sizing and portfolio constraints
-- **Statistical Testing**: Significance of results
-
-## 🛠️ Configuration
-
-The system uses YAML configuration files for easy experimentation:
-
-```yaml
-# configs/settings.yaml
-data:
-  primary_source: "yfinance"
-  cache_enabled: true
-  update_frequency: "daily"
-
-trading:
-  initial_capital: 100000
-  commission: 0.001
-  risk_per_trade: 0.02
-
-backtesting:
-  start_date: "2020-01-01"
-  benchmark: "SPY"
-  rebalance_frequency: "monthly"
-```
-
-## 📊 Key Metrics and Analysis
-
-### Performance Metrics
-- **Returns**: Total and annualized returns
-- **Risk-Adjusted Returns**: Sharpe ratio, Sortino ratio
-- **Drawdown Analysis**: Maximum drawdown, recovery time
-- **Statistical Tests**: T-tests, autocorrelation analysis
-
-### Risk Metrics
-- **Volatility**: Historical and realized volatility
-- **Value at Risk (VaR)**: Potential losses at confidence levels
-- **Beta**: Market sensitivity analysis
-- **Correlation**: Asset and strategy correlations
-
-## 🧪 Testing and Validation
-
-```bash
-# Run all tests
-pytest tests/ -v
-
-# Test specific components
-pytest tests/test_strategies/ -k "moving_average"
-
-# Coverage analysis
-pytest --cov=src/angband tests/
-```
-
-## 📝 Documentation and Learning Notes
-
-- **Research Notes**: Document learning insights and market observations
-- **Strategy Ideas**: Maintain a backlog of strategy concepts to explore
-- **Performance Reviews**: Regular analysis of what works and what doesn't
-- **Literature Reviews**: Summaries of relevant academic papers and books
-
-## 🤝 Contributing to Learning
-
-This is primarily a learning project, but contributions that enhance the educational value are welcome:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/new-learning-module`)
-3. Implement educational enhancements
-4. Submit a pull request with clear documentation
-
-## 📚 Recommended Reading
-
-- **"Quantitative Trading" by Ernest Chan**
-- **"Algorithmic Trading" by Jeffrey Bacidore**
-- **"Machine Learning for Asset Managers" by Marcos López de Prado**
-- **"Advances in Financial Machine Learning" by Marcos López de Prado**
-
-## ⚖️ License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 📞 Contact and Discussion
-
-- **Issues**: For bug reports and technical questions
-- **Discussions**: For strategy ideas and learning discussions
-- **Wiki**: For detailed documentation and tutorials
+Una plataforma educativa de *quantitative trading* para desarrollar, evaluar y comparar estrategias de trading cuantitativo de forma reproducible.
 
 ---
 
-> *"The best way to learn quantitative trading is by building, testing, and iterating."*
+## Tabla de contenidos
 
-**Happy Learning and Trading! 📈**
+1. [Descripción](#descripción)  
+2. [Características](#características)  
+3. [Estructura del proyecto](#estructura-del-proyecto)  
+4. [Requisitos previos](#requisitos-previos)  
+5. [Instalación](#instalación)  
+6. [Uso](#uso)  
+7. [Ejecutar tests](#ejecutar-tests)  
+8. [Roadmap](#roadmap)  
+9. [Cómo contribuir](#cómo-contribuir)  
+10. [Licencia](#licencia)
+
+---
+
+## Descripción
+
+Angband Trading es una herramienta educativa para:
+
+- Recolección y procesamiento de datos históricos de mercado (OHLCV, dividendos, splits, etc.)  
+- Cálculo de indicadores técnicos básicos  
+- Definición, implementación y evaluación de estrategias de trading  
+- Backtesting con métricas clave (Sharpe, Sortino, drawdown, VaR, etc.)  
+- Generación de reportes visuales y comparación frente a benchmarks  
+
+---
+
+## Características
+
+- Configuración declarativa mediante archivos YAML  
+- Arquitectura modular: **datos → indicadores → estrategias → backtesting → reportes**  
+- Métricas de rendimiento ya integradas  
+- Notebooks de ejemplo disponibles para exploración interactiva  
+- Bajo licencia MIT, lo que permite contribuciones abiertas  
+
+---
+
+## Estructura del proyecto
+
+.
+├── configs/                  # Archivos de configuración YAML  
+├── data/                     # Datos raw / procesados / caché  
+├── logs/                     # Archivos de log de ejecución  
+├── notebooks/                # Notebooks de exploración / análisis  
+├── src/angband/              # Código fuente  
+│   ├── core/                 # Configuración, utilidades comunes  
+│   ├── data/                 # Módulos para recolectar y procesar datos  
+│   ├── indicators/           # Cálculos de indicadores técnicos  
+│   ├── strategies/           # Implementaciones de estrategias de trading  
+│   ├── backtesting/          # Motor de simulación de trading  
+│   └── reports/              # Generación de reportes visuales  
+├── tests/                    # Tests automatizados  
+├── requirements.txt          # Dependencias para correr el proyecto  
+├── requirements-dev.txt      # Dependencias para desarrollo (tests, linters, etc.)  
+├── pyproject.toml            # Metadatos para instalación como paquete (si aplica)  
+└── README.md  
+
+---
+
+## Requisitos previos
+
+- Python 3.8 o superior  
+- Git  
+- Dependencias que se indican en `requirements.txt`  
+- (Opcional) Jupyter Notebook para exploración interactiva  
+
+---
+
+## Instalación
+
+```bash
+git clone https://github.com/jmarke17/angband_trading.git
+cd angband_trading
+
+# Crear y activar entorno virtual
+python -m venv .venv
+source .venv/bin/activate   # Linux / macOS
+.\.venv\Scripts\activate    # Windows
+
+# Instalar dependencias principales
+pip install -r requirements.txt
+
+# Para desarrollo (linters, tests, etc.)
+pip install -r requirements-dev.txt
+
+# Si existe pyproject.toml o setup.py, también se puede instalar como paquete editable
+pip install -e .
+```
+
+---
+
+## Uso
+
+Algunos ejemplos de comandos / flujo de trabajo:
+
+```bash
+# Descargar datos para un símbolo en un rango de fechas
+python -m angband.data --symbol AAPL --start 2020-01-01 --end 2023-01-01
+
+# Ejecutar estrategia (por ejemplo, cruce de medias móviles)
+python -m angband.backtesting --strategy sma_crossover --symbol AAPL --config configs/sma_config.yaml
+
+# Generar reporte visual
+python -m angband.reports --output reports/aapl_sma.html
+```
+
+También hay notebooks en `notebooks/` que muestran ejemplos completos de descarga de datos, ejecución de estrategia y visualización de resultados.
+
+---
+
+## Ejecutar tests
+
+```bash
+pytest
+```
+
+Se recomienda que los tests cubran:
+
+- Indicadores técnicos con valores conocidos  
+- Comportamiento del motor de backtesting en escenarios básicos (sin comisiones / slippage)  
+- Prueba end-to-end pequeña que recorra todo el pipeline  
+
+---
+
+## Roadmap
+
+- ✅ Fase 1: Recolección de datos & procesamiento  
+- ✅ Fase 2: Implementación de indicadores básicos  
+- ✅ Fase 3: Motor de backtesting simple  
+- Próxima: manejo de riesgo, slippage, optimización de parámetros  
+- Próxima: soporte para múltiples benchmarks  
+- Próxima: CLI más robusta / interfaz de usuario  
+- Próxima: generación de reportes en HTML/PDF  
+
+---
+
+## Cómo contribuir
+
+1. Haz *fork* del repositorio  
+2. Crea una rama nueva para tu feature o corrección (`git checkout -b mi-feature`)  
+3. Añade tests que cubran tus cambios  
+4. Asegúrate de que el código pase linters / formateo (black, ruff, etc.)  
+5. Abre un *pull request* explicando claramente qué haces y por qué  
+
+---
+
+## Licencia
+
+Este proyecto está bajo la licencia **MIT**. Ver archivo [LICENSE](LICENSE) para más detalles.
